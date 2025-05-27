@@ -352,7 +352,7 @@ class LitModel(pl.LightningModule):
                      on_step=True, prog_bar=False, logger=True, sync_dist=True)
 
         # Simplified debug printing for energy prediction
-        if batch_idx % 200 == 0: # Print less frequently
+        if batch_idx % 1000 == 0: # Print less frequently
             print("\n--- Training Step Debug ---")
             print(f"Batch Index: {batch_idx}")
             # y_pred from regression_Transformer is likely (batch_size, 1)
@@ -386,7 +386,7 @@ class LitModel(pl.LightningModule):
 
 
         # Simplified debug printing for energy prediction
-        if batch_idx % 50 == 0: # Print less frequently for validation
+        if batch_idx % 1000 == 0: # Print less frequently for validation
             print("\n--- Validation Step Debug ---")
             print(f"Batch Index: {batch_idx}")
             print(f"y_pred (first 5, validation): {y_pred[:5].detach().squeeze().cpu().numpy()}")
@@ -395,11 +395,11 @@ class LitModel(pl.LightningModule):
                 print(f"Loss (validation): {loss.item()}")
             
             # If predicting E/N and want to see unscaled E for debug:
-            # N_doms = event_lengths # N_doms is already event_lengths
-            # pred_E_unscaled_debug = y_pred[:5].detach().squeeze() * N_doms[:5].detach().float()
-            # target_E_unscaled_debug = target[:5].detach() * N_doms[:5].detach().float()
-            # print(f"pred_E_unscaled (debug, first 5): {pred_E_unscaled_debug.cpu().numpy()}")
-            # print(f"target_E_unscaled (debug, first 5): {target_E_unscaled_debug.cpu().numpy()}")
+            N_doms = event_lengths # N_doms is already event_lengths
+            pred_E_unscaled_debug = y_pred[:5].detach().squeeze() * N_doms[:5].detach().float()
+            target_E_unscaled_debug = target[:5].detach() * N_doms[:5].detach().float()
+            print(f"pred_E_unscaled (debug, first 5): {pred_E_unscaled_debug.cpu().numpy()}")
+            print(f"target_E_unscaled (debug, first 5): {target_E_unscaled_debug.cpu().numpy()}")
 
         return loss # Return loss for PyTorch Lightning to potentially use
 
