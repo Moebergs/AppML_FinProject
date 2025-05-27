@@ -1,0 +1,48 @@
+# PyTorch Lightning (High-level training wrapper) & Utilities
+pytorch-lightning==2.4.0
+lightning-utilities==0.11.6
+torchmetrics==1.4.1       # Common metrics library used with PyTorch/Lightning
+
+# Transformer / Model Building Blocks
+einops==0.8.0           # Often used for tensor manipulation in transformers
+flash-attn==2.7.2.post1     # Efficient attention implementation (GPU)
+ninja==1.11.1.3             # Often needed for building custom CUDA ops 
+
+# Weights & Biases (Experiment Tracking)
+wandb==0.17.7
+PyYAML==6.0.2 # Also for configs
+requests==2.31.0
+psutil==6.0.0         
+protobuf==5.27.3
+setproctitle==1.3.3
+GitPython==3.1.43       # Used by wandb to track code state
+docker-pycreds==0.4.0     # Used by wandb for system metrics/docker integration
+
+# Core Data Handling & Numerics
+numpy==1.26.4
+pandas==2.2.2
+pyarrow               # <<-- ADDED/ENSURED PRESENT
+scipy                 # <<-- ADDED/ENSURED PRESENT
+
+# Common Utilities & Dependencies (often required by the above)
+packaging==23.2
+tqdm==4.65.0            # Progress bars
+typing_extensions==4.12.2   # Required by many modern libraries
+pydantic==2.8.2           # Data validation library
+pydantic_core==2.20.1     # Core part of pydantic
+filelock==3.15.4          # Used by torch, huggingface libs
+sympy==1.13.2             # Used by torch
+networkx==3.3             # Used by torch
+jinja2==3.1.4             # Used by torch, PL
+MarkupSafe==3.0.2         # Dependency of Jinja2
+fsspec==2024.6.1            # Filesystem interactions, used by PL/wandb
+
+# Optional: TensorBoard Logging
+tensorboard==2.18.0
+tensorboard-data-server==0.7.2
+grpcio==1.67.1            # Dependency for TensorBoard
+
+# Additional packages from your explicit list
+transformers            # <<-- ADDED/ENSURED PRESENT
+accelerate              # <<-- ADDED/ENSURED PRESENT
+torchao                 # <<-- ADDED/ENSURED PRESENT
