@@ -9,14 +9,12 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger, TensorBoardLogger
 
-from src.dataloader import make_dataloader_PMT
+from src.dataloader import make_dataloader_PMT, make_dataloader_PMT_multi
 
 from src.model import regression_Transformer
 from src.model import LitModel
 
 from src.utils import assert_config_train
-
-from pytorch_lightning.profilers import PyTorchProfiler 
 
 with open('config.yaml', 'r') as f:
     config = yaml.safe_load(f)
@@ -30,8 +28,16 @@ device = torch.device(config['training_params']['device'] if torch.cuda.is_avail
 
 #==================================================================================================
 # Create the dataloaders
-if config['input_data']['multi_dataset']:#Stop training and print error "Multi-dataset training is not supported"
-    raise ValueError("multi_dataset is set to True in config, but multi-dataset loading has been removed. Please set multi_dataset: false.")
+if config['input_data']['multi_dataset']:
+    train_dataloader, val_dataloader = make_dataloader_PMT_multi(
+        root_dir=config['input_data']['root_dir'],
+        dataset_ids = config['input_data']['dataset_ids'],
+        training_parts = config['input_data']['training_parts'],
+        validation_parts = config['input_data']['validation_parts'],
+        sample_weights = [4, 4, 1],
+        batch_size=config['training_params']['batch_size'],
+        num_workers=config['input_data']['num_workers'],
+    )
 
 else:
     train_dataloader, val_dataloader = make_dataloader_PMT(
@@ -187,11 +193,6 @@ callbacks = [
     ),
             ]
 
-#Profiler for checking time usage
-profiler = PyTorchProfiler(dirpath=".", filename="profile_colab_run.txt", emit_nvtx=True, record_shapes=True)
-print(f"Profiler initialized. Output will be in: profile_colab_run.txt (in the directory where you run the script)")
-
-
 trainer = Trainer(
     accelerator= 'gpu' if 'cuda' in config['training_params']['device'] else 'cpu', 
     devices = [int(config['training_params']['device'].split(':')[-1])] if 'cuda' in config['training_params']['device'] else 1, 
@@ -199,7 +200,6 @@ trainer = Trainer(
     log_every_n_steps=config['log_every_n_steps'], 
     logger=logger,
     callbacks=callbacks,
-    profiler=profiler,
 )
 
 #==================================================================================================

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from src.dataset import PMTfiedDatasetPyArrow
-
+from src.dataset import PMTfiedDatasetPyArrowMulti
 
 with open('config.yaml', 'r') as f:
     config = yaml.safe_load(f)
@@ -228,3 +228,144 @@ def make_dataloader_PMT(
     )
 
     return train_loader, val_loader
+
+def make_dataloader_PMT_multi(
+        root_dir,
+        dataset_ids,
+        training_parts,
+        validation_parts,
+        sample_weights=[1, 1, 1], # for the three datasets
+        batch_size=config['training_params']['batch_size'],
+        num_workers=config['input_data']['num_workers'],
+):
+    """
+    Create a DataLoader for the PMTfied dataset. Takes data from multiple dataset IDs.
+    
+    Args:
+    - root_dir: Root directory of the dataset.
+    - dataset_ids: List of dataset IDs.
+    - training_parts: List of training parts.
+    - validation_parts: List of validation parts.
+    
+    Returns:
+    - train_loader: DataLoader for training data.
+    - val_loader: DataLoader for validation data.
+    """
+    train_paths_1 = []
+    val_paths_1 = []
+
+    train_paths_2 = []
+    val_paths_2 = []
+
+    train_paths_3 = []
+    val_paths_3 = []
+
+    # It isn't pretty, but it works
+    for part in training_parts[0]:
+        train_paths_1.append(f"{root_dir}/{dataset_ids[0]}/truth_{part}.parquet")
+    for part in validation_parts[0]:
+        val_paths_1.append(f"{root_dir}/{dataset_ids[0]}/truth_{part}.parquet")
+
+    for part in training_parts[1]:
+        train_paths_2.append(f"{root_dir}/{dataset_ids[1]}/truth_{part}.parquet")
+    for part in validation_parts[1]:
+        val_paths_2.append(f"{root_dir}/{dataset_ids[1]}/truth_{part}.parquet")
+
+    for part in training_parts[2]:
+        train_paths_3.append(f"{root_dir}/{dataset_ids[2]}/truth_{part}.parquet")
+    for part in validation_parts[2]:
+        val_paths_3.append(f"{root_dir}/{dataset_ids[2]}/truth_{part}.parquet")
+
+    train_set = PMTfiedDatasetPyArrowMulti(
+    truth_paths_1=train_paths_1,
+    truth_paths_2=train_paths_2,
+    truth_paths_3=train_paths_3,
+    sample_weights=sample_weights,
+    )
+
+    val_set = PMTfiedDatasetPyArrowMulti(
+    truth_paths_1=val_paths_1,
+    truth_paths_2=val_paths_2,
+    truth_paths_3=val_paths_3,
+    sample_weights=sample_weights,
+    )
+
+    train_loader = DataLoader(
+        dataset=train_set,
+        collate_fn= custom_collate_fn,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        persistent_workers=True,
+        pin_memory=True,
+    )
+    val_loader = DataLoader(
+        dataset=val_set,
+        collate_fn= custom_collate_fn,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        persistent_workers=True,
+        pin_memory=True,
+    )
+    return train_loader, val_loader
+
+def make_dataloader_PMT_inference(
+        root_dir,
+        dataset_id,
+        inference_parts,
+        batch_size=config['training_params']['batch_size'],
+        num_workers=config['input_data']['num_workers'],
+):
+    """
+    Create a DataLoader for the PMTfied dataset for inference. Takes data from a single dataset ID.
+    
+    Args:
+    - root_dir: Root directory of the dataset.
+    - dataset_id: ID of the dataset.
+    - inference_parts: List of dataset parts for inference.
+
+    Returns:
+    - inference_loader: DataLoader for inferenceg data.
+    """
+
+    # unpack the training and validation parts such that you can either input a list of lists or a single list
+    if isinstance(inference_parts[0], list):
+        inference_parts = np.array(inference_parts[0])
+    else:
+        inference_parts = np.array(inference_parts)
+
+
+    inference_paths = []
+    for part in inference_parts:
+        inference_paths.append(f"{root_dir}/{dataset_id[0]}/truth_{part}.parquet")
+
+    print(f"Loading inference data from {inference_paths}")
+    event_no_array = np.array([])
+    for path in inference_paths:
+        pd_truth = pd.read_parquet(path)
+        event_no = pd_truth['event_no'].values
+        # append to the event_no array
+        event_no_array = np.append(event_no_array, event_no)
+
+    # take first 500_000 events
+    if len(event_no_array) > 500_000:
+        print(f"WARNING: Taking first 500_000 events from {len(event_no_array)} events because of memory constraints")
+        event_no_array = event_no_array[:500_000]
+        
+    inference_set = PMTfiedDatasetPyArrow(
+    truth_paths=inference_paths,
+    selection=event_no_array,
+    )
+
+    inference_loader = DataLoader(
+        dataset=inference_set,
+        collate_fn= custom_collate_fn,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        persistent_workers=True,
+        pin_memory=True,
+    )
+
+    return inference_loader, event_no_array
