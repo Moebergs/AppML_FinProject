@@ -1,7 +1,7 @@
 # Configuration for Training the Neutrino Reconstruction Transformer Model
 
 # General run Settings
-run_name: "Test" # Name for logging and checkpointing
+run_name: "HiddenLayerTest" # Name for logging and checkpointing
 checkpoint_path: #"/groups/icecube/luc/Workspace/GraphNet/work/IceCube_transformer/lightning_logs/version_250/last.ckpt"            # Directory to save model checkpoints
 
 # Input Data Parameters
@@ -13,7 +13,7 @@ input_data:
   validation_parts: [[4]]                 # List of list of validation parts to use (e.g., [4]) matching the dataset_ids
   reconstruction_target: "energy"        # Target variable for reconstruction ('dir3vec', 'azimuth_zenith', etc.)
   seq_dim: 256                            # Maximum sequence length of the input data
-  num_workers: 5                          # Number of worker processes for data loading
+  num_workers: 6                          # Number of worker processes for data loading
   # Add other data-related parameters if needed (e.g., specific file names, pre-processing flags)
 
 # Model Parameters
@@ -30,7 +30,7 @@ model_params:
 training_params:
   device: "cuda:0"                        # Device to train on ('cuda:0', 'cuda:1', 'cpu')
   batch_size: 64                          # Number of samples per batch
-  n_epochs: 10                           # Maximum number of training epochs
+  n_epochs: 50                           # Maximum number of training epochs
   patience: 20                            # Number of epochs to wait for improvement before early stopping (-1 to disable)
   loss_function: MSE_loss            # Loss function to use 
   learning_rate: 0.0005                   # Constant learning rate (base lr, might be overridden by scheduler)
