@@ -232,7 +232,7 @@ class regression_Transformer(nn.Module):
             embedding_dim=96,
             n_layers=6,
             n_heads=6,
-            input_dim=7,
+            input_dim=32,
             seq_dim=256,
             dropout=0.1,
             output_dim=1,
@@ -246,13 +246,13 @@ class regression_Transformer(nn.Module):
         self.mean_pooling = AveragePooling() # average pooling layer to get a single embedding from the sequence
         self.max_pooling = MaxPooling() # max pooling layer to get a single embedding from the sequence
 
-        self.output_mlp_head = nn.Sequential(
-            nn.Linear(embedding_dim*3, embedding_dim),
-            nn.ReLU(),
-            nn.Dropout(dropout), # Optional: add dropout in the MLP head too
-            nn.Linear(embedding_dim, output_dim))
+        #self.output_mlp_head = nn.Sequential(
+        #    nn.Linear(embedding_dim*3, embedding_dim),
+        #    nn.ReLU(),
+        #    nn.Dropout(dropout), # Optional: add dropout in the MLP head too
+        #    nn.Linear(embedding_dim, output_dim))
 
-        #self.linear_regression = Linear_regression(embedding_dim*3, output_dim) # linear regression layer to predict the target
+        self.linear_regression = Linear_regression(embedding_dim*3, output_dim) # linear regression layer to predict the target
 
     def forward(self, x, target=None, event_lengths=None):
         seq_dim_x = x.shape[1]
@@ -299,7 +299,7 @@ class regression_Transformer(nn.Module):
         combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
 
         # Feed to a linear regression layer
-        y_pred = self.output_mlp_head(combined_x)
+        y_pred = self.linear_regression(combined_x)
 
         if target is None:
             loss = None

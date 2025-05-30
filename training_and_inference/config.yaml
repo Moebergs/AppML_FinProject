@@ -21,7 +21,7 @@ model_params:
   feature_dim: 32                        # Dimension of the input features (e.g., PMT-fied data)
   embedding_dim: 128                      # Dimension of the input embeddings
   output_dim: 1                           # Dimension of the final output (e.g., 3 for direction vector, 2 for azimuth/zenith)
-  n_layers: 4                             # Number of transformer encoder layers
+  n_layers: 6                             # Number of transformer encoder layers
   n_heads: 2                              # Number of attention heads in multi-head attention
   dropout: 0.1                            # Dropout rate used in the model
   # Add other model-specific hyperparameters (e.g., activation function, normalization type)
