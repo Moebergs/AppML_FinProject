@@ -281,11 +281,11 @@ class regression_Transformer(nn.Module):
         x_mean = x.sum(dim=1) / event_lengths.view(-1, 1) # Shape: (batch_size, emb_dim)
 
         # Max Pooling
-        x_for_max = x.clone().masked_fill_(~pool_mask_expanded, -torch.finfo(x_orig.dtype).max)
+        x_for_max = x.clone().masked_fill_(~mask, -torch.finfo(x.dtype).max)
         max_pooled_x = torch.max(x_for_max, dim=1)[0]
 
         # Min Pooling
-        x_for_min = x.clone().masked_fill_(~pool_mask_expanded, torch.finfo(x_orig.dtype).max)
+        x_for_min = x.clone().masked_fill_(~mask, torch.finfo(x.dtype).max)
         min_pooled_x = torch.min(x_for_min, dim=1)[0]
 
         # Combine Mean, Max, and Min
