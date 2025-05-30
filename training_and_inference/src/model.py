@@ -299,7 +299,7 @@ class regression_Transformer(nn.Module):
         combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
 
         # Feed to a linear regression layer
-        y_pred = self.linear_regression(combined_x)
+        y_pred = self.output_mlp_head(combined_x)
 
         if target is None:
             loss = None
