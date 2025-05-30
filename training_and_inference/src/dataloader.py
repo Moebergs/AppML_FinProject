@@ -68,16 +68,19 @@ def custom_collate_fn(batch, max_seq_length=config['input_data']['seq_dim']):
     label_name = reconstruction_target
 
     # Extract labels and convert to tensors (3D vectors)
-    vectors = [item[label_name] for item in batch]
+    vectors_target = [item[label_name] for item in batch]
+    vectors_original = [item.energy_original for item in batch]
 
     # Stack labels in case of multi-dimensional output
-    labels = torch.stack(vectors)
+    labels = torch.stack(vectors_target)
+    original = torch.stack(vectors_original)
 
     # set to float32
     batch_events = batch_events.float()
     labels = labels.float()
+    original = original.float()
     
-    return batch_events, labels, event_lengths
+    return batch_events, labels, event_lengths, original
 
 def pad_or_truncate_pulse(event, max_seq_length=config['input_data']['seq_dim'], charge_index=int(0)):
     """

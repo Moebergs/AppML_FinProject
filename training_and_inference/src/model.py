@@ -245,7 +245,7 @@ class regression_Transformer(nn.Module):
         self.layer_norm = nn.LayerNorm(embedding_dim)
         self.mean_pooling = AveragePooling() # average pooling layer to get a single embedding from the sequence
         self.max_pooling = MaxPooling() # max pooling layer to get a single embedding from the sequence
-        self.linear_regression = Linear_regression(embedding_dim, output_dim) # linear regression layer to predict the target
+        self.linear_regression = Linear_regression(embedding_dim*3, output_dim) # linear regression layer to predict the target
 
     def forward(self, x, target=None, event_lengths=None):
         seq_dim_x = x.shape[1]
@@ -278,10 +278,21 @@ class regression_Transformer(nn.Module):
         x = x.masked_fill(mask == 0, 0)
 
         # Mean pooling over the sequence dimension
-        x = x.sum(dim=1) / event_lengths.view(-1, 1) # Shape: (batch_size, emb_dim)
+        x_mean = x.sum(dim=1) / event_lengths.view(-1, 1) # Shape: (batch_size, emb_dim)
+
+        # Max Pooling
+        x_for_max = x.clone().masked_fill_(~pool_mask_expanded, -torch.finfo(x_orig.dtype).max)
+        max_pooled_x = torch.max(x_for_max, dim=1)[0]
+
+        # Min Pooling
+        x_for_min = x.clone().masked_fill_(~pool_mask_expanded, torch.finfo(x_orig.dtype).max)
+        min_pooled_x = torch.min(x_for_min, dim=1)[0]
+
+        # Combine Mean, Max, and Min
+        combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
 
         # Feed to a linear regression layer
-        y_pred = self.linear_regression(x)
+        y_pred = self.linear_regression(combined_x)
 
         if target is None:
             loss = None
@@ -365,16 +376,21 @@ class LitModel(pl.LightningModule):
         # self.train_opening_angles = []
         
     def validation_step(self, batch, batch_idx):
-        x, target, event_lengths = batch[0], batch[1], batch[2]
+        x, target, event_lengths, original_energy = batch[0], batch[1], batch[2], batch[3]
         y_pred, loss = self.model(x, target=target, event_lengths=event_lengths)
         #loss = torch.mean(loss)
         self.val_losses.append(loss.item())
 
+        y_pred_squeezed = y_pred.squeeze() if y_pred.ndim > 1 else y_pred
+
+        pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
+        pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
+
         if batch_idx % 1000 == 0:
             # Print y_pred and target for the first 5 events in the batch
             print("\n")
-            print("y_pred: ", y_pred[:5])
-            print("target: ", target[:5])
+            print("y_pred: ", y_pred[:5], pred_E[:5])
+            print("target: ", target[:5], original_energy[:5])
 
         # if batch_idx % 10 == 0:
 
@@ -392,6 +408,9 @@ class LitModel(pl.LightningModule):
         #     self.val_opening_angles.append(opening_angle)
 
         self.log('val_loss', loss, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
+
+        mse_on_actual_E = torch.mean((pred_E - original_energy)**2)
+        self.log('val_MSE_on_ActualEnergy', mse_on_actual_E, prog_bar=False, on_epoch=True, logger=True, sync_dist=True)
 
     def on_validation_epoch_end(self):
         # Log the median validation loss at the end of each epoch

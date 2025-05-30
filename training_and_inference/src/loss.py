@@ -4,9 +4,10 @@ import numpy as np
 
 def MSE_loss(y_pred, target):
     y_pred = y_pred.squeeze()
-    # Compute manual MSE loss
+    target = target.squeeze()
     loss = torch.mean((y_pred - target) ** 2)
     return loss
+
 
 
 def dir_3vec_loss(pred, target):

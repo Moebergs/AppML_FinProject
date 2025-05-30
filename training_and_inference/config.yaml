@@ -1,7 +1,7 @@
 # Configuration for Training the Neutrino Reconstruction Transformer Model
 
 # General run Settings
-run_name: "FinPro_run1" # Name for logging and checkpointing
+run_name: "Test" # Name for logging and checkpointing
 checkpoint_path: #"/groups/icecube/luc/Workspace/GraphNet/work/IceCube_transformer/lightning_logs/version_250/last.ckpt"            # Directory to save model checkpoints
 
 # Input Data Parameters
@@ -9,11 +9,11 @@ input_data:
   root_dir: "/content/dataset" # Path to the root directory of processed input data (e.g., PMT-fied data)
   multi_dataset: false                   # Whether to combine multiple datasets
   dataset_ids: [22011]                    # List of dataset IDs to use (e.g., [22011, 22012]), only allows one dataset if multi_dataset is false     
-  training_parts: [[1,2]]             # List of list of training parts to use (e.g., [1, 2, 3]) matching the dataset_ids
+  training_parts: [[1,2,3]]             # List of list of training parts to use (e.g., [1, 2, 3]) matching the dataset_ids
   validation_parts: [[4]]                 # List of list of validation parts to use (e.g., [4]) matching the dataset_ids
   reconstruction_target: "energy"        # Target variable for reconstruction ('dir3vec', 'azimuth_zenith', etc.)
-  seq_dim: 128                            # Maximum sequence length of the input data
-  num_workers: 2                          # Number of worker processes for data loading
+  seq_dim: 256                            # Maximum sequence length of the input data
+  num_workers: 5                          # Number of worker processes for data loading
   # Add other data-related parameters if needed (e.g., specific file names, pre-processing flags)
 
 # Model Parameters
@@ -29,7 +29,7 @@ model_params:
 # Training Parameters
 training_params:
   device: "cuda:0"                        # Device to train on ('cuda:0', 'cuda:1', 'cpu')
-  batch_size: 16                          # Number of samples per batch
+  batch_size: 64                          # Number of samples per batch
   n_epochs: 10                           # Maximum number of training epochs
   patience: 20                            # Number of epochs to wait for improvement before early stopping (-1 to disable)
   loss_function: MSE_loss            # Loss function to use 

@@ -109,10 +109,11 @@ class PMTfiedDatasetPyArrow(Dataset):
 
         # Get the event details
         event_no = torch.tensor(int(truth.column('event_no')[local_idx].as_py()), dtype=torch.long)
-        energy = torch.tensor(truth.column('energy')[local_idx].as_py(), dtype=torch.float32)
+        energy_original = torch.tensor(truth.column('energy')[local_idx].as_py(), dtype=torch.float32)
         azimuth = torch.tensor(truth.column('azimuth')[local_idx].as_py(), dtype=torch.float32)
         zenith = torch.tensor(truth.column('zenith')[local_idx].as_py(), dtype=torch.float32)
         pid = torch.tensor(truth.column('pid')[local_idx].as_py(), dtype=torch.float32)
+
 
         # Calculate a 3D unit-vector from the zenith and azimuth angles
         x_dir = torch.sin(zenith) * torch.cos(azimuth)
@@ -132,6 +133,10 @@ class PMTfiedDatasetPyArrow(Dataset):
         n_doms = int(truth.column('N_doms')[local_idx].as_py())
         part_no = int(truth.column('part_no')[local_idx].as_py())
         shard_no = int(truth.column('shard_no')[local_idx].as_py())
+
+        n_doms_for_division = torch.tensor(n_doms, dtype=torch.float32).clamp(min=1.0) # Use float, clamp for division
+        energy_per_n = energy_original / n_doms_for_division
+        energy = torch.log10(energy_per_n.clamp(min=1e-7)) 
 
         # Define the feature path based on the truth path
         feature_path = truth_path.replace('truth_{}.parquet'.format(part_no), '' + str(part_no) + '/PMTfied_{}.parquet'.format(shard_no))
@@ -161,7 +166,7 @@ class PMTfiedDatasetPyArrow(Dataset):
             value_tensor = torch.from_numpy(value)
             x_tensor[:, i] = value_tensor
 
-        return Data(x=x_tensor, n_doms=n_doms, event_no=event_no, feature_path=feature_path, energy=energy, azimuth_neutrino=azimuth, zenith_neutrino=zenith, dir3vec=dir3vec, dir3vec_lepton=dir3vec_lepton, pid=pid)
+        return Data(x=x_tensor, n_doms=n_doms, event_no=event_no, feature_path=feature_path, energy_original=energy_original, energy=energy, azimuth_neutrino=azimuth, zenith_neutrino=zenith, dir3vec=dir3vec, dir3vec_lepton=dir3vec_lepton, pid=pid)
     
 
 class PMTfiedDatasetPyArrowMulti(Dataset):
