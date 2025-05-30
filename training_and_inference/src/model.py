@@ -245,7 +245,14 @@ class regression_Transformer(nn.Module):
         self.layer_norm = nn.LayerNorm(embedding_dim)
         self.mean_pooling = AveragePooling() # average pooling layer to get a single embedding from the sequence
         self.max_pooling = MaxPooling() # max pooling layer to get a single embedding from the sequence
-        self.linear_regression = Linear_regression(embedding_dim*3, output_dim) # linear regression layer to predict the target
+
+        self.output_mlp_head = nn.Sequential(
+            nn.Linear(embedding_dim*3, embedding_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout), # Optional: add dropout in the MLP head too
+            nn.Linear(embedding_dim, output_dim))
+
+        #self.linear_regression = Linear_regression(embedding_dim*3, output_dim) # linear regression layer to predict the target
 
     def forward(self, x, target=None, event_lengths=None):
         seq_dim_x = x.shape[1]
