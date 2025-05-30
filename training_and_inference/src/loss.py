@@ -5,7 +5,7 @@ import numpy as np
 def MSE_loss(y_pred, target):
     y_pred = y_pred.squeeze()
     target = target.squeeze()
-    loss = torch.mean((y_pred - target) ** 2)
+    loss = torch.mean(torch.abs(y_pred - target))
     return loss
 
 
