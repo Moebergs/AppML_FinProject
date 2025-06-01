@@ -252,7 +252,7 @@ class regression_Transformer(nn.Module):
         #    nn.Dropout(dropout), # Optional: add dropout in the MLP head too
         #    nn.Linear(embedding_dim, output_dim))
 
-        self.linear_regression = Linear_regression(embedding_dim*3, output_dim) # linear regression layer to predict the target
+        self.linear_regression = Linear_regression(embedding_dim, output_dim) # linear regression layer to predict the target
 
     def forward(self, x, target=None, event_lengths=None):
         seq_dim_x = x.shape[1]
@@ -287,16 +287,17 @@ class regression_Transformer(nn.Module):
         # Mean pooling over the sequence dimension
         x_mean = x.sum(dim=1) / event_lengths.view(-1, 1) # Shape: (batch_size, emb_dim)
 
-        # Max Pooling
-        x_for_max = x.clone().masked_fill_(~mask, -torch.finfo(x.dtype).max)
-        max_pooled_x = torch.max(x_for_max, dim=1)[0]
+        # # Max Pooling
+        # x_for_max = x.clone().masked_fill_(~mask, -torch.finfo(x.dtype).max)
+        # max_pooled_x = torch.max(x_for_max, dim=1)[0]
 
-        # Min Pooling
-        x_for_min = x.clone().masked_fill_(~mask, torch.finfo(x.dtype).max)
-        min_pooled_x = torch.min(x_for_min, dim=1)[0]
+        # # Min Pooling
+        # x_for_min = x.clone().masked_fill_(~mask, torch.finfo(x.dtype).max)
+        # min_pooled_x = torch.min(x_for_min, dim=1)[0]
 
-        # Combine Mean, Max, and Min
-        combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
+        # # Combine Mean, Max, and Min
+        # combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
+        combined_x = x_mean
 
         # Feed to a linear regression layer
         y_pred = self.linear_regression(combined_x)
