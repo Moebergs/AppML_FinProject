@@ -121,7 +121,7 @@ target_x = torch.cat(target_x, dim=0)
 
 print('Pred_x shape:', pred_x.shape)
 
-df = pd.DataFrame({"event_no": event_no, "x_pred": pred_x, "x_truth": target_x})
+df = pd.DataFrame({"event_no": event_no, "x_pred": pred_x.squeeze(), "x_truth": target_x.squeeze()})
 
 destination = config['inference_params']['inference_output_path'] + config['run_name'] + '_' +  str(config['inference_params']['inference_dataset_id']) + '_' + str(config['inference_params']['inference_parts'])+ '_prediction.csv'
 df.to_csv(destination, index=False)
