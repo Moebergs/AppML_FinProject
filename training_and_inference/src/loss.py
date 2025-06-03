@@ -9,7 +9,7 @@ import torch.nn.functional as F
 #     loss = torch.mean((y_pred - target) ** 2)
 #     return loss
 
-def MSE_loss(y_pred, target, delta=1.0):
+def MSE_loss(y_pred, target, delta=0.1e6):
     y_pred = y_pred.squeeze()
     target = target.squeeze()
     
