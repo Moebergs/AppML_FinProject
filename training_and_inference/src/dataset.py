@@ -136,7 +136,10 @@ class PMTfiedDatasetPyArrow(Dataset):
 
         # n_doms_for_division = torch.tensor(n_doms, dtype=torch.float32).clamp(min=1.0) # Use float, clamp for division
         # energy_per_n = energy_original / n_doms_for_division
-        energy = torch.log10(energy_original.clamp(min=1e-7)) 
+
+        # energy = torch.log10(energy_original.clamp(min=1e-7)) 
+
+        energy = energy_original
 
         # Define the feature path based on the truth path
         feature_path = truth_path.replace('truth_{}.parquet'.format(part_no), '' + str(part_no) + '/PMTfied_{}.parquet'.format(shard_no))
