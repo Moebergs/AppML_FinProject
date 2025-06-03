@@ -391,9 +391,9 @@ class LitModel(pl.LightningModule):
 
         y_pred_squeezed = y_pred.squeeze() if y_pred.ndim > 1 else y_pred
 
-        # pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
-        # pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
-        pred_E = 10**(y_pred_squeezed)
+        pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
+        pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
+        # pred_E = 10**(y_pred_squeezed)
 
         if batch_idx % 1000 == 0:
             # Print y_pred and target for the first 5 events in the batch
