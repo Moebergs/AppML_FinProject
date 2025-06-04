@@ -297,7 +297,8 @@ class regression_Transformer(nn.Module):
 
         # # Combine Mean, Max, and Min
         # combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
-        log_n_doms_feature = torch.log10(event_lengths_for_processing.float().clamp(min=1.0)).unsqueeze(-1)
+        print(event_lengths)
+        log_n_doms_feature = torch.log10(event_lengths.float().clamp(min=1.0)).unsqueeze(-1)
         combined_x = x_mean
 
         final_features_for_mlp = torch.cat((combined_x, log_n_doms_feature), dim=1)
