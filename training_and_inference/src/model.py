@@ -254,7 +254,7 @@ class regression_Transformer(nn.Module):
 
         self.linear_regression = Linear_regression(embedding_dim+1, output_dim) # linear regression layer to predict the target
 
-    def forward(self, x, target=None, event_lengths=None):
+    def forward(self, x, target=None, event_lengths=None, original_event_n_doms=None):
         seq_dim_x = x.shape[1]
         device = x.device
 
@@ -297,8 +297,8 @@ class regression_Transformer(nn.Module):
 
         # # Combine Mean, Max, and Min
         # combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
-        print(event_lengths)
-        log_n_doms_feature = torch.log10(event_lengths.float().clamp(min=1.0)).unsqueeze(-1)
+        print(original_event_n_doms)
+        log_n_doms_feature = torch.log10(original_event_n_doms.float().clamp(min=1.0)).unsqueeze(-1)
         combined_x = x_mean
 
         final_features_for_mlp = torch.cat((combined_x, log_n_doms_feature), dim=1)
@@ -340,8 +340,8 @@ class LitModel(pl.LightningModule):
         return self.model(x, event_lengths=event_lengths)
 
     def training_step(self, batch, batch_idx):
-        x, target, event_lengths = batch[0], batch[1], batch[2]
-        y_pred, loss = self.model(x, target=target, event_lengths=event_lengths)
+        x, target, event_lengths, original_Ndoms = batch[0], batch[1], batch[2], batch[4]
+        y_pred, loss = self.model(x, target=target, event_lengths=event_lengths, original_event_n_doms=original_Ndoms)
         #mean_loss = torch.mean(loss)
         self.train_losses.append(loss.item())
 
@@ -366,8 +366,8 @@ class LitModel(pl.LightningModule):
         self.train_losses = []
         
     def validation_step(self, batch, batch_idx):
-        x, target, event_lengths, original_energy = batch[0], batch[1], batch[2], batch[3]
-        y_pred, loss = self.model(x, target=target, event_lengths=event_lengths)
+        x, target, event_lengths, original_energy, original_Ndoms = batch[0], batch[1], batch[2], batch[3], batch[4]
+        y_pred, loss = self.model(x, target=target, event_lengths=event_lengths, original_event_n_doms=original_Ndoms)
         #loss = torch.mean(loss)
         self.val_losses.append(loss.item())
 
