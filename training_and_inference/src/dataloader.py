@@ -79,7 +79,7 @@ def custom_collate_fn(batch, max_seq_length=config['input_data']['seq_dim']):
     # set to float32
     batch_events = batch_events.float()
     labels = labels.float()
-    original = original.float()
+    original_energy = original_energy.float()
     
     return batch_events, labels, event_lengths, original_energy, original_n_doms
 
