@@ -396,8 +396,8 @@ class LitModel(pl.LightningModule):
         self.val_losses = []
 
     def predict_step(self, batch, batch_idx):
-        x, target, event_lengths = batch[0], batch[1], batch[2]
-        y_pred, _ = self.model(x, event_lengths=event_lengths)
+        x, target, event_lengths, original_event_n_doms = batch[0], batch[1], batch[2], batch[4]
+        y_pred, _ = self.model(x, event_lengths=event_lengths, original_event_n_doms=original_event_n_doms)
         return {'y_pred': y_pred, 'target': target}
 
     def configure_optimizers(self):
