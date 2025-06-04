@@ -332,8 +332,6 @@ class LitModel(pl.LightningModule):
         self.train_losses = []
         self.val_losses = []
 
-        # self.train_opening_angles = []
-        # self.val_opening_angles = []
 
     def forward(self, x, event_lengths=None):
         return self.model(x, event_lengths=event_lengths)
@@ -352,19 +350,6 @@ class LitModel(pl.LightningModule):
             print("y_pred: ", y_pred[:5])
             print("target: ", target[:5])
 
-            # pred_x = y_pred[:5, 0].detach().cpu().to(torch.float32).numpy()
-            # pred_y = y_pred[:5, 1].detach().cpu().to(torch.float32).numpy()
-            # pred_z = y_pred[:5, 2].detach().cpu().to(torch.float32).numpy()
-
-            # target_x = target[:5, 0].detach().cpu().to(torch.float32).numpy()
-            # target_y = target[:5, 1].detach().cpu().to(torch.float32).numpy()
-            # target_z = target[:5, 2].detach().cpu().to(torch.float32).numpy()
-
-            # opening_angle = np.arccos((pred_x * target_x + pred_y * target_y + pred_z * target_z) / (np.sqrt(pred_x**2 + pred_y**2 + pred_z**2) * np.sqrt(target_x**2 + target_y**2 + target_z**2))) * 180 / np.pi
-            # print("Opening angle (deg): ", opening_angle)
-
-            # self.train_opening_angles.append(opening_angle)
-
         
         self.log('train_loss', loss, prog_bar=True, on_step=True, logger=True, sync_dist=True)
 
@@ -375,13 +360,7 @@ class LitModel(pl.LightningModule):
         median_train_loss = torch.tensor(self.train_losses).median().item()
         self.log('median_train_loss', median_train_loss, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
 
-        # mean_train_opening_angle = np.mean(self.train_opening_angles)
-        # median_train_opening_angle = np.median(self.train_opening_angles)
-        # self.log('mean_train_opening_angle', mean_train_opening_angle, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
-        # self.log('median_train_opening_angle', median_train_opening_angle, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
-
         self.train_losses = []
-        # self.train_opening_angles = []
         
     def validation_step(self, batch, batch_idx):
         x, target, event_lengths, original_energy = batch[0], batch[1], batch[2], batch[3]
@@ -393,28 +372,13 @@ class LitModel(pl.LightningModule):
 
         # pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
         # pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
-        pred_E = y_pred_squeezed
+        pred_E = 10**(y_pred_squeezed)
 
         if batch_idx % 1000 == 0:
             # Print y_pred and target for the first 5 events in the batch
             print("\n")
             print("y_pred: ", y_pred[:5], pred_E[:5])
             print("target: ", target[:5], original_energy[:5])
-
-        # if batch_idx % 10 == 0:
-
-        #     pred_x = y_pred[:5, 0].detach().cpu().to(torch.float32).numpy()
-        #     pred_y = y_pred[:5, 1].detach().cpu().to(torch.float32).numpy()
-        #     pred_z = y_pred[:5, 2].detach().cpu().to(torch.float32).numpy()
-
-        #     target_x = target[:5, 0].detach().cpu().to(torch.float32).numpy()
-        #     target_y = target[:5, 1].detach().cpu().to(torch.float32).numpy()
-        #     target_z = target[:5, 2].detach().cpu().to(torch.float32).numpy()
-
-        #     opening_angle = np.arccos((pred_x * target_x + pred_y * target_y + pred_z * target_z) / (np.sqrt(pred_x**2 + pred_y**2 + pred_z**2) * np.sqrt(target_x**2 + target_y**2 + target_z**2))) * 180 / np.pi
-        #     print("Opening angle (deg): ", opening_angle)
-
-        #     self.val_opening_angles.append(opening_angle)
 
         self.log('val_loss', loss, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
 
@@ -426,13 +390,7 @@ class LitModel(pl.LightningModule):
         median_val_loss = torch.tensor(self.val_losses).median().item()
         self.log('median_val_loss', median_val_loss, prog_bar=True, on_epoch=True, logger=True)
 
-        # mean_val_opening_angle = np.mean(self.val_opening_angles)
-        # median_val_opening_angle = np.median(self.val_opening_angles)
-        # self.log('mean_val_opening_angle', mean_val_opening_angle, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
-        # self.log('median_val_opening_angle', median_val_opening_angle, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
-
         self.val_losses = []
-        # self.val_opening_angles = []
 
     def predict_step(self, batch, batch_idx):
         x, target, event_lengths = batch[0], batch[1], batch[2]
