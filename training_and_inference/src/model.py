@@ -252,7 +252,7 @@ class regression_Transformer(nn.Module):
         #    nn.Dropout(dropout), # Optional: add dropout in the MLP head too
         #    nn.Linear(embedding_dim, output_dim))
 
-        self.linear_regression = Linear_regression(embedding_dim, output_dim) # linear regression layer to predict the target
+        self.linear_regression = Linear_regression(embedding_dim+1, output_dim) # linear regression layer to predict the target
 
     def forward(self, x, target=None, event_lengths=None):
         seq_dim_x = x.shape[1]
@@ -297,10 +297,12 @@ class regression_Transformer(nn.Module):
 
         # # Combine Mean, Max, and Min
         # combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
+        log_n_doms_feature = torch.log10(event_lengths_for_processing.float().clamp(min=1.0)).unsqueeze(-1)
         combined_x = x_mean
 
+        final_features_for_mlp = torch.cat((combined_x, log_n_doms_feature), dim=1)
         # Feed to a linear regression layer
-        y_pred = self.linear_regression(combined_x)
+        y_pred = self.linear_regression(final_features_for_mlp)
 
         if target is None:
             loss = None

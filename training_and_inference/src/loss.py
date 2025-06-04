@@ -3,19 +3,19 @@ import scipy.special
 import numpy as np
 import torch.nn.functional as F
 
-# def MSE_loss(y_pred, target):
-#     y_pred = y_pred.squeeze()
-#     target = target.squeeze()
-#     loss = torch.mean((y_pred - target) ** 2)
-#     return loss
-
-# MAE Loss
 def MSE_loss(y_pred, target):
     y_pred = y_pred.squeeze()
     target = target.squeeze()
-    
-    loss = torch.mean(torch.abs(y_pred - target))
+    loss = torch.mean((y_pred - target) ** 2)
     return loss
+
+# MAE Loss
+# def MSE_loss(y_pred, target):
+#     y_pred = y_pred.squeeze()
+#     target = target.squeeze()
+    
+#     loss = torch.mean(torch.abs(y_pred - target))
+#     return loss
 
 # Huber Loss
 # def MSE_loss(y_pred, target, delta=0.1e6):
