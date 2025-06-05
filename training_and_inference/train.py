@@ -9,7 +9,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger, TensorBoardLogger
 
-from src.dataloader import make_dataloader_PMT, make_dataloader_PMT_multi
+from src.dataloader import make_dataloader_PMT
 
 from src.model import regression_Transformer
 from src.model import LitModel
