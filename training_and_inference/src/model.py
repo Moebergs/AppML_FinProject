@@ -5,22 +5,20 @@ import yaml
 
 import numpy as np
 
-from src.loss import dir_3vec_loss, MSE_loss, VonMisesFisherLoss3D, opening_angle_loss, Simon_loss
+from src.loss import MSE_loss, MAE_loss, Huber_loss
 
 with open('config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
 # set loss func based on the config file but not the string
-if config['training_params']['loss_function'] == 'dir_3vec_loss':
-    loss_func = dir_3vec_loss
 elif config['training_params']['loss_function'] == 'MSE_loss':
     loss_func = MSE_loss
-elif config['training_params']['loss_function'] == 'VonMisesFisherLoss3D':
-    loss_func = VonMisesFisherLoss3D
-elif config['training_params']['loss_function'] == 'opening_angle_loss':
-    loss_func = opening_angle_loss
-elif config['training_params']['loss_function'] == 'Simon_loss':
-    loss_func = Simon_loss
+elif config['training_params']['loss_function'] == 'MAE_loss':
+    loss_func = MAE_loss
+elif config['training_params']['loss_function'] == 'Huber_loss':
+    loss_func = Huber_loss
+else:
+    raise ValueError(f"Unknown loss function: {config['training_params']['loss_function']}")
 
 class AttentionHead(nn.Module):
     """ 
@@ -147,9 +145,9 @@ class FeedForward(nn.Module):
     def forward(self, x):
         return self.step(x)
 
-class DecoderBlock(nn.Module):
+class EncoderBlock(nn.Module):
     """
-    Decoder block class:
+    Encoder block class:
     - contains a multi-head attention layer and a feedforward network
     - applies layer normalization after each sublayer
     - applies a skip connection around each sublayer
@@ -162,7 +160,7 @@ class DecoderBlock(nn.Module):
             n_heads,
             dropout,
             ):
-        super(DecoderBlock, self).__init__()
+        super(EncoderBlock, self).__init__()
         self.multihead = MultiAttentionHead(embedding_dim, n_heads, dropout)
         self.feedforward = FeedForward(embedding_dim, dropout)
         self.norm1 = nn.LayerNorm(embedding_dim)
@@ -179,29 +177,6 @@ class DecoderBlock(nn.Module):
 
         return x
     
-class AveragePooling(nn.Module):
-    """
-    Average pooling class:
-    - applies average pooling to a sequence of embeddings along the sequence dimension
-    - returns a single embedding
-    """
-    def __init__(self):
-        super(AveragePooling, self).__init__()
-    
-    def forward(self, x):
-        return torch.mean(x, dim=1)
-    
-class MaxPooling(nn.Module):
-    """
-    Max pooling class:
-    - applies max pooling to a sequence of embeddings along the sequence dimension
-    - returns a single embedding
-    """
-    def __init__(self):
-        super(MaxPooling, self).__init__()
-    
-    def forward(self, x):
-        return torch.max(x, dim=1)
     
 class Linear_regression(nn.Module):
     """
@@ -241,31 +216,25 @@ class regression_Transformer(nn.Module):
 
         self.input_embedding = nn.Linear(input_dim, embedding_dim)
         self.position_embedding = nn.Embedding(seq_dim, embedding_dim)
-        self.layers = nn.ModuleList([DecoderBlock(embedding_dim, n_heads, dropout) for _ in range(n_layers)])
+        self.layers = nn.ModuleList([EncoderBlock(embedding_dim, n_heads, dropout) for _ in range(n_layers)])
         self.layer_norm = nn.LayerNorm(embedding_dim)
-        self.mean_pooling = AveragePooling() # average pooling layer to get a single embedding from the sequence
-        self.max_pooling = MaxPooling() # max pooling layer to get a single embedding from the sequence
+        self.linear_regression = Linear_regression(embedding_dim, output_dim)
 
         #self.output_mlp_head = nn.Sequential(
-        #    nn.Linear(embedding_dim*3, embedding_dim),
+        #    nn.Linear(embedding_dim, embedding_dim*4),
         #    nn.ReLU(),
-        #    nn.Dropout(dropout), # Optional: add dropout in the MLP head too
-        #    nn.Linear(embedding_dim, output_dim))
-
-        self.linear_regression = Linear_regression(embedding_dim, output_dim) # linear regression layer to predict the target
+        #    nn.Dropout(dropout),
+        #    nn.Linear(embedding_dim*4, output_dim))
 
     def forward(self, x, target=None, event_lengths=None, original_event_n_doms=None):
         seq_dim_x = x.shape[1]
         device = x.device
 
         input_emb = self.input_embedding(x).to(device)
-        #print("Input emb shape: ", input_emb.shape)
         pos_emb = self.position_embedding(torch.arange(seq_dim_x, device=device))
         pos_emb = pos_emb.unsqueeze(0).expand(x.shape[0], -1, -1)	# Shape: (batch_size, seq_dim, emb_dim)
         
         x = input_emb + pos_emb
-
-        #print("Final emb shape: ", x.shape)
 
         for layer in self.layers:
             x = layer(x, event_lengths=event_lengths)
@@ -297,11 +266,9 @@ class regression_Transformer(nn.Module):
 
         # # Combine Mean, Max, and Min
         # combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
-        #print(original_event_n_doms)
+        
         log_n_doms_feature = torch.log10(original_event_n_doms.float().clamp(min=1.0)).unsqueeze(-1)
-        combined_x = x_mean
-
-        final_features_for_mlp = torch.cat((combined_x, log_n_doms_feature), dim=1)
+        input_with_Ndoms = torch.cat((combined_x, log_n_doms_feature), dim=1)
         # Feed to a linear regression layer
         y_pred = self.linear_regression(x_mean)
 
@@ -342,18 +309,9 @@ class LitModel(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, target, event_lengths, original_Ndoms = batch[0], batch[1], batch[2], batch[4]
         y_pred, loss = self.model(x, target=target, event_lengths=event_lengths, original_event_n_doms=original_Ndoms)
-        #mean_loss = torch.mean(loss)
         self.train_losses.append(loss.item())
 
         self.log('learning_rate', self.trainer.optimizers[0].param_groups[0]['lr'], on_step=True, prog_bar=False, logger=True, sync_dist=True)
-
-        if batch_idx % 1000 == 0:
-            # Print y_pred and target for the first 5 events in the batch
-            print("\n")
-            print("y_pred: ", y_pred[:5])
-            print("target: ", target[:5])
-
-        
         self.log('train_loss', loss, prog_bar=True, on_step=True, logger=True, sync_dist=True)
 
         return loss
@@ -368,7 +326,6 @@ class LitModel(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         x, target, event_lengths, original_energy, original_Ndoms = batch[0], batch[1], batch[2], batch[3], batch[4]
         y_pred, loss = self.model(x, target=target, event_lengths=event_lengths, original_event_n_doms=original_Ndoms)
-        #loss = torch.mean(loss)
         self.val_losses.append(loss.item())
 
         y_pred_squeezed = y_pred.squeeze() if y_pred.ndim > 1 else y_pred
@@ -376,12 +333,6 @@ class LitModel(pl.LightningModule):
         # pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
         # pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
         pred_E = 10**(y_pred_squeezed)
-
-        if batch_idx % 1000 == 0:
-            # Print y_pred and target for the first 5 events in the batch
-            print("\n")
-            print("y_pred: ", y_pred[:5], pred_E[:5])
-            print("target: ", target[:5], original_energy[:5])
 
         self.log('val_loss', loss, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
 
