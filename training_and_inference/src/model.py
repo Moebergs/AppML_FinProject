@@ -11,7 +11,7 @@ with open('config.yaml', 'r') as f:
     config = yaml.safe_load(f)
 
 # set loss func based on the config file but not the string
-elif config['training_params']['loss_function'] == 'MSE_loss':
+if config['training_params']['loss_function'] == 'MSE_loss':
     loss_func = MSE_loss
 elif config['training_params']['loss_function'] == 'MAE_loss':
     loss_func = MAE_loss
