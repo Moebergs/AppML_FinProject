@@ -169,6 +169,8 @@ def make_dataloader_PMT(
         validation_parts,
         batch_size=config['training_params']['batch_size'],
         num_workers=config['input_data']['num_workers'],
+        zenith_threshold=config['input_data']['zenith_threshold'],
+        zenith_condition=config['input_data']['zenith_condition']
 ):
     """
     Create a DataLoader for the PMTfied dataset. Takes data from a single dataset ID.
@@ -204,11 +206,11 @@ def make_dataloader_PMT(
 
 
     train_set = PMTfiedDatasetPyArrow(
-    truth_paths=train_paths,
+    truth_paths=train_paths, zenith_threshold=zenith_threshold, zenith_condition=zenith_condition
     )
 
     val_set = PMTfiedDatasetPyArrow(
-    truth_paths=val_paths,
+    truth_paths=val_paths, zenith_threshold=zenith_threshold, zenith_condition=zenith_condition
     )
 
     train_loader = DataLoader(

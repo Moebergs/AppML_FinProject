@@ -46,6 +46,8 @@ class PMTfiedDatasetPyArrow(Dataset):
             truth_paths,
             selection=None,
             transform=feature_preprocessing,
+            zenith_threshold=None,
+            zenith_condition=None,
     ):
         '''
         Args:
@@ -57,6 +59,9 @@ class PMTfiedDatasetPyArrow(Dataset):
         self.truth_paths = truth_paths
         self.selection = selection
         self.transform = transform
+
+        self.zenith_threshold = zenith_threshold
+        self.zenith_condition = zenith_condition
 
         # Metadata variables
         self.event_counts = []
@@ -73,6 +78,20 @@ class PMTfiedDatasetPyArrow(Dataset):
             if self.selection is not None:
                 mask = pc.is_in(truth['event_no'], value_set=pa.array(self.selection))
                 truth = truth.filter(mask)
+            
+            if self.zenith_threshold is not None and self.zenith_condition is not None:
+                zenith_values = truth.column('zenith')
+                if self.zenith_condition == 'greater':
+                    zenith_mask = pc.greater(zenith_values, self.zenith_threshold)
+                elif self.zenith_condition == 'less':
+                    zenith_mask = pc.less(zenith_values, self.zenith_threshold)
+                else:
+                    print(f"No zenith filtering applied for condition: {self.zenith_condition}")
+                    zenith_mask = None
+
+                if zenith_mask is not None :
+                    truth = truth.filter(zenith_mask)   
+
             n_events = len(truth)
             self.event_counts.append(n_events)
             total_events += n_events

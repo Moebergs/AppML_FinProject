@@ -14,6 +14,8 @@ input_data:
   reconstruction_target: "energy"        # Target variable for reconstruction ('dir3vec', 'azimuth_zenith', etc.)
   seq_dim: 256                            # Maximum sequence length of the input data
   num_workers: 6                          # Number of worker processes for data loading
+  zenith_condition: 'less'
+  zenith_threshold: 1.5708
   # Add other data-related parameters if needed (e.g., specific file names, pre-processing flags)
 
 # Model Parameters
