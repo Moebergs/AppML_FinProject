@@ -267,8 +267,8 @@ class regression_Transformer(nn.Module):
         # # Combine Mean, Max, and Min
         # combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
         
-        log_n_doms_feature = torch.log10(original_event_n_doms.float().clamp(min=1.0)).unsqueeze(-1)
-        input_with_Ndoms = torch.cat((combined_x, log_n_doms_feature), dim=1)
+        #log_n_doms_feature = torch.log10(original_event_n_doms.float().clamp(min=1.0)).unsqueeze(-1)
+        #input_with_Ndoms = torch.cat((combined_x, log_n_doms_feature), dim=1)
         # Feed to a linear regression layer
         y_pred = self.linear_regression(x_mean)
 
