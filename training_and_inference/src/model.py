@@ -335,9 +335,9 @@ class LitModel(pl.LightningModule):
 
         y_pred_squeezed = y_pred.squeeze() if y_pred.ndim > 1 else y_pred
 
-        # pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
-        # pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
-        pred_E = 10**(y_pred_squeezed)
+        pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
+        pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
+        # pred_E = 10**(y_pred_squeezed)
 
         self.log('val_loss', loss, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
 
