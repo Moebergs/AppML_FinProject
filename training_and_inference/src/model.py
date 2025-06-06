@@ -218,7 +218,7 @@ class regression_Transformer(nn.Module):
         self.position_embedding = nn.Embedding(seq_dim, embedding_dim)
         self.layers = nn.ModuleList([EncoderBlock(embedding_dim, n_heads, dropout) for _ in range(n_layers)])
         self.layer_norm = nn.LayerNorm(embedding_dim)
-        self.linear_regression = Linear_regression(embedding_dim, output_dim)
+        self.linear_regression = Linear_regression(embedding_dim*4, output_dim)
 
         #self.output_mlp_head = nn.Sequential(
         #    nn.Linear(embedding_dim, embedding_dim*4),
@@ -256,21 +256,24 @@ class regression_Transformer(nn.Module):
         # Mean pooling over the sequence dimension
         x_mean = x.sum(dim=1) / event_lengths.view(-1, 1) # Shape: (batch_size, emb_dim)
 
+        # Sum pooling over the sequence dimension
+        x_sum = x.sum(dim=1)  # Shape: (batch_size, emb_dim)
+
         # # Max Pooling
-        # x_for_max = x.clone().masked_fill_(~mask, -torch.finfo(x.dtype).max)
-        # max_pooled_x = torch.max(x_for_max, dim=1)[0]
+        x_for_max = x.clone().masked_fill_(~mask, -torch.finfo(x.dtype).max)
+        max_pooled_x = torch.max(x_for_max, dim=1)[0]
 
         # # Min Pooling
-        # x_for_min = x.clone().masked_fill_(~mask, torch.finfo(x.dtype).max)
-        # min_pooled_x = torch.min(x_for_min, dim=1)[0]
+        x_for_min = x.clone().masked_fill_(~mask, torch.finfo(x.dtype).max)
+        min_pooled_x = torch.min(x_for_min, dim=1)[0]
 
         # # Combine Mean, Max, and Min
-        # combined_x = torch.cat((x_mean, max_pooled_x, min_pooled_x), dim=1)
+        input_to_final_regressor = torch.cat((x_mean, x_sum, max_pooled_x, min_pooled_x), dim=1)
         
         #log_n_doms_feature = torch.log10(original_event_n_doms.float().clamp(min=1.0)).unsqueeze(-1)
         #input_with_Ndoms = torch.cat((combined_x, log_n_doms_feature), dim=1)
         # Feed to a linear regression layer
-        y_pred = self.linear_regression(x_mean)
+        y_pred = self.linear_regression(input_to_final_regressor)
 
         if target is None:
             loss = None
