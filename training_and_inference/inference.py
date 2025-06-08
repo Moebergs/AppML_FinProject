@@ -86,42 +86,37 @@ print('Predictions done')
 print('Start storing the predictions')
 # Storing the predictions in a pandas dataframe
 pred_x = []
-# pred_y = []
-# pred_z = []
 
 target_x = []
-# target_y = []
-# target_z = []
+
+zenith_x = []
 
 # Loop over the predictions
 for i in range(len(predictions)):
     y_pred = predictions[i]['y_pred']
     target = predictions[i]['target']
+    zenith = predictions[i]['zenith']
     if i == 0:
         print('y_pred', y_pred)
         print('target', target)
 
-    # Append (batch_size, 1) to the list
     pred_x.append(y_pred)
-    # pred_y.append(y_pred[:, 1])
-    # pred_z.append(y_pred[:, 2])
 
     target_x.append(target)
-    # target_y.append(target[:, 1])
-    # target_z.append(target[:, 2])
+
+    zenith_x.append(zenith)
+
 
 # Concatenate the list of tensors to a single tensor
 pred_x = torch.cat(pred_x, dim=0)
-# pred_y = torch.cat(pred_y, dim=0)
-# pred_z = torch.cat(pred_z, dim=0)
 
 target_x = torch.cat(target_x, dim=0)
-# target_y = torch.cat(target_y, dim=0)
-# target_z = torch.cat(target_z, dim=0)
+
+zenith_x = torch.cat(zenith_x, dim=0)
 
 print('Pred_x shape:', pred_x.shape)
 
-df = pd.DataFrame({"event_no": event_no, "x_pred": pred_x.squeeze(), "x_truth": target_x.squeeze()})
+df = pd.DataFrame({"event_no": event_no, "x_pred": pred_x.squeeze(), "x_truth": target_x.squeeze(), "zenith": zenith_x.squeeze()})
 
 destination = config['inference_params']['inference_output_path'] + config['run_name'] + '_' +  str(config['inference_params']['inference_dataset_id']) + '_' + str(config['inference_params']['inference_parts'])+ '_prediction.csv'
 df.to_csv(destination, index=False)

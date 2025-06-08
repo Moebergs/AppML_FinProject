@@ -75,12 +75,14 @@ def custom_collate_fn(batch, max_seq_length=config['input_data']['seq_dim']):
     original_energy = torch.stack(vectors_original)
     original_n_doms = torch.tensor([item.n_doms for item in batch])
 
+    zenith_batch = torch.stack([item.zenith for item in batch]).float()
+
     # set to float32
     batch_events = batch_events.float()
     labels = labels.float()
     original_energy = original_energy.float()
     
-    return batch_events, labels, event_lengths, original_energy, original_n_doms
+    return batch_events, labels, event_lengths, original_energy, original_n_doms, zenith_batch
 
 
 def make_dataloader_PMT(

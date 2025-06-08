@@ -133,6 +133,7 @@ class PMTfiedDatasetPyArrow(Dataset):
 
         offset = int(truth.column('offset')[local_idx].as_py())
         n_doms = int(truth.column('N_doms')[local_idx].as_py())
+        zenith = torch.tensor(truth.column('zenith')[local_idx].as_py(), dtype=torch.float32)
         part_no = int(truth.column('part_no')[local_idx].as_py())
         shard_no = int(truth.column('shard_no')[local_idx].as_py())
 
@@ -169,5 +170,5 @@ class PMTfiedDatasetPyArrow(Dataset):
             value_tensor = torch.from_numpy(value)
             x_tensor[:, i] = value_tensor
 
-        return Data(x=x_tensor, n_doms=n_doms, event_no=event_no, feature_path=feature_path, energy_original=energy_original, energy=energy)
+        return Data(x=x_tensor, n_doms=n_doms, event_no=event_no, feature_path=feature_path, energy_original=energy_original, energy=energy, zenith=zenith)
     
