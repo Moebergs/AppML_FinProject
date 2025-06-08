@@ -165,6 +165,8 @@ def make_dataloader_PMT_inference(
         inference_parts,
         batch_size=config['training_params']['batch_size'],
         num_workers=config['input_data']['num_workers'],
+        zenith_threshold=config['input_data']['zenith_threshold'],
+        zenith_condition=config['input_data']['zenith_condition']
 ):
     """
     Create a DataLoader for the PMTfied dataset for inference. Takes data from a single dataset ID.
@@ -205,6 +207,8 @@ def make_dataloader_PMT_inference(
     inference_set = PMTfiedDatasetPyArrow(
     truth_paths=inference_paths,
     selection=event_no_array,
+    zenith_threshold=zenith_threshold,
+    zenith_condition=zenith_condition
     )
 
     inference_loader = DataLoader(

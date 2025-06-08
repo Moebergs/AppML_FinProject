@@ -31,6 +31,8 @@ inference_dataloader, event_no = make_dataloader_PMT_inference(
         inference_parts = config['inference_params']['inference_parts'],
         batch_size=config['training_params']['batch_size'],
         num_workers=config['input_data']['num_workers'],
+        zenith_threshold=config['input_data']['zenith_threshold'],
+        zenith_condition=config['input_data']['zenith_condition'],
     )
 
 #==================================================================================================
