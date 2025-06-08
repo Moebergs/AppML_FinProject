@@ -274,8 +274,8 @@ class regression_Transformer(nn.Module):
         # scaled_Ndoms = log_n_doms_feature - 4
         # input_with_Ndoms = torch.cat((x_mean, scaled_Ndoms), dim=1)
         # Feed to a linear regression layer
-        #y_pred = self.linear_regression(input_with_Ndoms)
-        y_pred = self.output_mlp_head(x_mean)
+        y_pred = self.linear_regression(x_mean)
+        #y_pred = self.output_mlp_head(x_mean)
 
         if target is None:
             loss = None
