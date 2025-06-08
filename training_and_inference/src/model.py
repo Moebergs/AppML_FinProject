@@ -218,13 +218,13 @@ class regression_Transformer(nn.Module):
         self.position_embedding = nn.Embedding(seq_dim, embedding_dim)
         self.layers = nn.ModuleList([EncoderBlock(embedding_dim, n_heads, dropout) for _ in range(n_layers)])
         self.layer_norm = nn.LayerNorm(embedding_dim)
-        #self.linear_regression = Linear_regression(embedding_dim*4, output_dim)
+        self.linear_regression = Linear_regression(embedding_dim, output_dim)
 
-        self.output_mlp_head = nn.Sequential(
-           nn.Linear(embedding_dim+1, (embedding_dim+1)*4),
-           nn.ReLU(),
-           nn.Dropout(dropout),
-           nn.Linear((embedding_dim+1)*4, output_dim))
+        # self.output_mlp_head = nn.Sequential(
+        #    nn.Linear(embedding_dim+1, (embedding_dim+1)*4),
+        #    nn.ReLU(),
+        #    nn.Dropout(dropout),
+        #    nn.Linear((embedding_dim+1)*4, output_dim))
 
     def forward(self, x, target=None, event_lengths=None, original_event_n_doms=None):
         seq_dim_x = x.shape[1]
@@ -270,12 +270,12 @@ class regression_Transformer(nn.Module):
         # # Combine Mean, Max, and Min
         #input_to_final_regressor = torch.cat((x_mean, x_sum, max_pooled_x, min_pooled_x), dim=1)
         
-        log_n_doms_feature = torch.log10(original_event_n_doms.float().clamp(min=1.0)).unsqueeze(-1)
-        scaled_Ndoms = log_n_doms_feature - 4
-        input_with_Ndoms = torch.cat((x_mean, scaled_Ndoms), dim=1)
+        # log_n_doms_feature = torch.log10(original_event_n_doms.float().clamp(min=1.0)).unsqueeze(-1)
+        # scaled_Ndoms = log_n_doms_feature - 4
+        # input_with_Ndoms = torch.cat((x_mean, scaled_Ndoms), dim=1)
         # Feed to a linear regression layer
         #y_pred = self.linear_regression(input_with_Ndoms)
-        y_pred = self.output_mlp_head(input_with_Ndoms)
+        y_pred = self.output_mlp_head(x_mean)
 
         if target is None:
             loss = None
@@ -335,9 +335,9 @@ class LitModel(pl.LightningModule):
 
         y_pred_squeezed = y_pred.squeeze() if y_pred.ndim > 1 else y_pred
 
-        pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
-        pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
-        # pred_E = 10**(y_pred_squeezed)
+        # pred_E_over_N = 10**(y_pred_squeezed) # Use 10** for log10
+        # pred_E = pred_E_over_N * event_lengths.float() # N_doms is event_lengths
+        pred_E = 10**(y_pred_squeezed)
 
         self.log('val_loss', loss, prog_bar=True, on_epoch=True, logger=True, sync_dist=True)
 

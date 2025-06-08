@@ -2,7 +2,7 @@
 
 # General run Settings
 run_name: "HiddenLayerTest" # Name for logging and checkpointing
-checkpoint_path: #"/groups/icecube/luc/Workspace/GraphNet/work/IceCube_transformer/lightning_logs/version_250/last.ckpt"            # Directory to save model checkpoints
+checkpoint_path: #""            # Directory to save model checkpoints
 
 # Input Data Parameters
 input_data:

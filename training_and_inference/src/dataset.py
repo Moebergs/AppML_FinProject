@@ -105,14 +105,25 @@ class PMTfiedDatasetPyArrow(Dataset):
         # Load the truth and apply selection
         if file_idx != self.current_file_idx:
             self.current_file_idx = file_idx
+            truth_table_from_disk = pq.read_table(truth_path)
             
-            truth = pq.read_table(truth_path)
-            #print("Loaded truth table")
             if self.selection is not None:
-                mask = pc.is_in(truth['event_no'], value_set=pa.array(self.selection))
-                self.current_truth = truth.filter(mask)
-            else:
-                self.current_truth = truth
+                mask = pc.is_in(truth_table_from_disk['event_no'], value_set=pa.array(self.selection))
+                truth_table_from_disk = truth_table_from_disk.filter(mask)
+            
+            if self.zenith_threshold is not None and self.zenith_condition is not None:
+                zenith_values = truth_table_from_disk.column('zenith')
+                zenith_mask = None
+                if self.zenith_condition == 'greater':
+                    zenith_mask = pc.greater(zenith_values, self.zenith_threshold)
+                elif self.zenith_condition == 'less':
+                    zenith_mask = pc.less(zenith_values, self.zenith_threshold)
+                
+                if zenith_mask is not None:
+                    truth_table_from_disk = truth_table_from_disk.filter(zenith_mask)
+            
+            
+            self.current_truth = truth_table_from_disk
             
         truth = self.current_truth
 
@@ -125,11 +136,11 @@ class PMTfiedDatasetPyArrow(Dataset):
         part_no = int(truth.column('part_no')[local_idx].as_py())
         shard_no = int(truth.column('shard_no')[local_idx].as_py())
 
-        n_doms_for_division = torch.tensor(n_doms, dtype=torch.float32).clamp(min=1.0) # Use float, clamp for division
-        energy_per_n = energy_original / n_doms_for_division
+        # n_doms_for_division = torch.tensor(n_doms, dtype=torch.float32).clamp(min=1.0) # Use float, clamp for division
+        # energy_per_n = energy_original / n_doms_for_division
 
-        #energy = torch.log10(energy_original.clamp(min=1e-7))
-        energy = torch.log10(energy_per_n.clamp(min=1e-7)) 
+        energy = torch.log10(energy_original.clamp(min=1e-7))
+        # energy = torch.log10(energy_per_n.clamp(min=1e-7)) 
 
         # Define the feature path based on the truth path
         feature_path = truth_path.replace('truth_{}.parquet'.format(part_no), '' + str(part_no) + '/PMTfied_{}.parquet'.format(shard_no))
