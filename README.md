@@ -1,2 +1,2 @@
 # Applied Machine Learning Final Project - Transforming IceCube
-Model based on https://github.com/lucvoorend/IceCubeTransformer and changed to focus mainly on the task of energy regression
+Final Project in Applied Machine Learning 2025 at the University of Copenhagen. Project by Franciszek Nawrocki, Laurits Møberg, David Johansen. Based on original work by Luc Voorend (https://github.com/lucvoorend/IceCubeTransformer). This repository focuses on the Transformer encoder architecture used for energy regression of IceCube events.
